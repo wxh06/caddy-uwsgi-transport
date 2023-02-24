@@ -1,0 +1,5 @@
+:9090 {
+	reverse_proxy 127.0.0.1:3031 {
+		transport uwsgi
+	}
+}
