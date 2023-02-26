@@ -84,7 +84,6 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
 
 	blockVars := generateBlockVars(req)
 	conn.Write([]byte{0})                                            // modifier1
