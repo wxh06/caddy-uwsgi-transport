@@ -51,17 +51,29 @@ func writeBlockVar(buffer *bytes.Buffer, s string) {
 }
 
 // generateBlockVars returns the packet body of WSGI block vars generated from http.Request.
-func generateBlockVars(req *http.Request) *bytes.Buffer {
-	method := req.Method
-	if method == "" {
-		method = "GET"
+func generateBlockVars(req *http.Request) (*bytes.Buffer, error) {
+	serverName, serverPort, err := net.SplitHostPort(req.Host)
+	if err != nil {
+		return nil, err
 	}
+	if serverPort == "" {
+		if req.TLS == nil {
+			serverPort = "80"
+		} else {
+			serverPort = "443"
+		}
+	}
+
 	vars := map[string]string{
-		"REQUEST_METHOD":  method,
-		"SERVER_PROTOCOL": req.Proto,
-		"REQUEST_URI":     req.URL.RequestURI(),
+		"REQUEST_METHOD":  req.Method,
+		"SCRIPT_NAME":     "",
+		"PATH_INFO":       req.URL.Path,
 		"QUERY_STRING":    req.URL.RawQuery,
-		"HTTP_HOST":       req.Host,
+		"CONTENT_TYPE":    req.Header.Get("Content-Type"),
+		"CONTENT_LENGTH":  req.Header.Get("Content-Length"),
+		"SERVER_NAME":     serverName,
+		"SERVER_PORT":     serverPort,
+		"SERVER_PROTOCOL": req.Proto,
 		"REMOTE_ADDR":     req.RemoteAddr,
 	}
 	if req.TLS != nil {
@@ -76,7 +88,7 @@ func generateBlockVars(req *http.Request) *bytes.Buffer {
 		writeBlockVar(&packetBody, key)
 		writeBlockVar(&packetBody, val)
 	}
-	return &packetBody
+	return &packetBody, nil
 }
 
 func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -85,7 +97,11 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	blockVars := generateBlockVars(req)
+	blockVars, err := generateBlockVars(req)
+	if err != nil {
+		return nil, err
+	}
+
 	conn.Write([]byte{0})                                            // modifier1
 	binary.Write(conn, binary.LittleEndian, uint16(blockVars.Len())) // datasize
 	conn.Write([]byte{0})                                            // modifier2

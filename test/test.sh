@@ -13,4 +13,4 @@ trap 'kill "$UWSGI" "$CADDY"' SIGINT SIGTERM EXIT
 while ! nc -z localhost 3031 || ! nc -z localhost 9090; do
 	true
 done
-curl -v http://127.0.0.1:9090/ -o "$TEST_DIR/response.txt" && grep Hello "$TEST_DIR/response.txt"
+curl -v http://127.0.0.1:9090/ -o "$TEST_DIR/response.txt" && grep -q Hello "$TEST_DIR/response.txt"
