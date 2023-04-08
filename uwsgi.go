@@ -54,7 +54,7 @@ func writeBlockVar(buffer *bytes.Buffer, s string) {
 func generateBlockVars(req *http.Request) (*bytes.Buffer, error) {
 	serverName, serverPort, err := net.SplitHostPort(req.Host)
 	if err != nil {
-		return nil, err
+		serverName = req.Host
 	}
 	if serverPort == "" {
 		if req.TLS == nil {
