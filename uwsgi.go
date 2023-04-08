@@ -75,6 +75,7 @@ func generateBlockVars(req *http.Request) (*bytes.Buffer, error) {
 		"SERVER_PORT":     serverPort,
 		"SERVER_PROTOCOL": req.Proto,
 		"REMOTE_ADDR":     req.RemoteAddr,
+		"HTTP_HOST":       req.Host,
 	}
 	if req.TLS != nil {
 		vars["HTTPS"] = "on"
