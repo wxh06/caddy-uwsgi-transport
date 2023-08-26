@@ -25,6 +25,7 @@ import (
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp/reverseproxy"
 )
 
 func init() {
@@ -93,7 +94,13 @@ func generateBlockVars(req *http.Request) (*bytes.Buffer, error) {
 }
 
 func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	conn, err := net.Dial("tcp", req.URL.Host)
+	ctx := req.Context()
+	network, address := "tcp", req.URL.Host
+	if dialInfo, ok := reverseproxy.GetDialInfo(ctx); ok {
+		network = dialInfo.Network
+		address = dialInfo.Address
+	}
+	conn, err := net.Dial(network, address)
 	if err != nil {
 		return nil, err
 	}
